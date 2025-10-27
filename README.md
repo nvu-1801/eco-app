@@ -1,4 +1,23 @@
 # Welcome to your Expo app 👋
+# tạo app mới (nếu bạn chưa có)
+npx create-expo-app@latest expo-supa-async --template
+cd expo-supa-async
+
+# cài libs
+npm i @supabase/supabase-js @react-native-async-storage/async-storage react-native-url-polyfill expo-router
+
+# Nếu project chưa bật router:
+npx expo install expo-router
+
+# Bật Router trong app.json/app.config.js:
+
+{
+  "expo": {
+    "experiments": { "typedRoutes": true },
+    "scheme": "expdemo",
+    "plugins": ["expo-router"]
+  }
+}
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
