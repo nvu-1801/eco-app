@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "../store/store";
+import type { RootState } from "../store";
 import {
   addItem,
   clearCart,
@@ -11,7 +11,9 @@ import type { Product } from "../types/product";
 
 export function useCart() {
   const dispatch = useDispatch();
-  const cartItems = useSelector((state: RootState) => state.cart.items);
+  const { items: cartItems, hydrated } = useSelector(
+    (state: RootState) => state.cart
+  );
 
   const itemCount = useMemo(() => {
     return cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -23,9 +25,12 @@ export function useCart() {
 
   const totalDiscount = useMemo(() => {
     return cartItems.reduce((sum, item) => {
-      const originalPrice = item.price / (1 - item.discountPercentage / 100);
-      const discount = (originalPrice - item.price) * item.quantity;
-      return sum + discount;
+      if (item.discountPercentage > 0) {
+        const originalPrice = item.price / (1 - item.discountPercentage / 100);
+        const discount = (originalPrice - item.price) * item.quantity;
+        return sum + discount;
+      }
+      return sum;
     }, 0);
   }, [cartItems]);
 
@@ -63,6 +68,7 @@ export function useCart() {
     itemCount,
     totalPrice,
     totalDiscount,
+    hydrated, // Expose hydration status
     addToCart,
     removeFromCart,
     updateItemQuantity,

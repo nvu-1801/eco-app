@@ -1,6 +1,8 @@
 import { useCart } from "@/hooks/useCart";
+import { useFavorites } from "@/hooks/useFavorites";
 import type { Product } from "@/types/product";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -11,6 +13,7 @@ type Props = {
 export function ProductCard({ product }: Props) {
   const router = useRouter();
   const { addToCart, isInCart, getItemQuantity } = useCart();
+  const { toggle, isFavorite } = useFavorites();
 
   const handlePress = () => {
     router.push(`/(product)/${product.id}`);
@@ -26,8 +29,14 @@ export function ProductCard({ product }: Props) {
     router.push("/cart");
   };
 
+  const handleToggleFavorite = (e: any) => {
+    e.stopPropagation();
+    toggle(product.id);
+  };
+
   const inCart = isInCart(product.id);
   const quantity = getItemQuantity(product.id);
+  const favorite = isFavorite(product.id);
 
   return (
     <Pressable
@@ -41,6 +50,14 @@ export function ProductCard({ product }: Props) {
           style={styles.image}
           resizeMode="cover"
         />
+
+        {/* Gradient Overlay */}
+        <LinearGradient
+          colors={["transparent", "rgba(0,0,0,0.5)"]}
+          style={styles.imageGradient}
+        />
+
+        {/* Discount Badge */}
         {product.discountPercentage > 0 && (
           <View style={styles.discountBadge}>
             <Text style={styles.discountText}>
@@ -48,9 +65,21 @@ export function ProductCard({ product }: Props) {
             </Text>
           </View>
         )}
+
+        {/* Favorite Button */}
+        <Pressable style={styles.favoriteButton} onPress={handleToggleFavorite}>
+          <Ionicons
+            name={favorite ? "heart" : "heart-outline"}
+            size={18}
+            color={favorite ? "#DC2626" : "#FFFFFF"}
+          />
+        </Pressable>
+
+        {/* In Cart Badge */}
         {inCart && (
           <View style={styles.inCartBadge}>
-            <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
+            <Ionicons name="checkmark-circle" size={16} color="#FFFFFF" />
+            <Text style={styles.inCartText}>{quantity}</Text>
           </View>
         )}
       </View>
@@ -69,36 +98,29 @@ export function ProductCard({ product }: Props) {
           {product.title}
         </Text>
 
-        {/* Description */}
-        <Text style={styles.description} numberOfLines={2}>
-          {product.description}
-        </Text>
+        {/* Rating */}
+        <View style={styles.ratingContainer}>
+          <Ionicons name="star" size={12} color="#FBBF24" />
+          <Text style={styles.rating}>{product.rating.toFixed(1)}</Text>
+          <Text style={styles.stock}>
+            {product.stock > 0 ? `${product.stock} left` : "Out"}
+          </Text>
+        </View>
 
-        {/* Price Row */}
-        <View style={styles.priceRow}>
+        {/* Price */}
+        <View style={styles.priceContainer}>
           <Text style={styles.price}>${product.price}</Text>
           {product.discountPercentage > 0 && (
             <Text style={styles.originalPrice}>
               $
               {(product.price / (1 - product.discountPercentage / 100)).toFixed(
-                0
+                2
               )}
             </Text>
           )}
         </View>
 
-        {/* Footer */}
-        <View style={styles.footer}>
-          <View style={styles.ratingContainer}>
-            <Ionicons name="star" size={14} color="#FBBF24" />
-            <Text style={styles.rating}>{product.rating.toFixed(1)}</Text>
-          </View>
-          <Text style={styles.stock}>
-            {product.stock > 0 ? `${product.stock} left` : "Out of stock"}
-          </Text>
-        </View>
-
-        {/* Add to Cart / View Cart Button */}
+        {/* Add to Cart Button */}
         {inCart ? (
           <Pressable
             style={({ pressed }) => [
@@ -108,9 +130,8 @@ export function ProductCard({ product }: Props) {
             ]}
             onPress={handleGoToCart}
           >
-            <Ionicons name="cart" size={16} color="#FFFFFF" />
-            <Text style={styles.addButtonText}>View Cart ({quantity})</Text>
-            <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
+            <Ionicons name="cart" size={14} color="#FFFFFF" />
+            <Text style={styles.addButtonText}>View Cart</Text>
           </Pressable>
         ) : (
           <Pressable
@@ -122,9 +143,9 @@ export function ProductCard({ product }: Props) {
             onPress={handleAddToCart}
             disabled={product.stock === 0}
           >
-            <Ionicons name="add-circle-outline" size={16} color="#FFFFFF" />
+            <Ionicons name="add-circle-outline" size={14} color="#FFFFFF" />
             <Text style={styles.addButtonText}>
-              {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
+              {product.stock === 0 ? "Out of Stock" : "Add"}
             </Text>
           </Pressable>
         )}
@@ -137,17 +158,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFFFFF",
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: "hidden",
-    marginHorizontal: 4,
-    elevation: 2,
+    elevation: 3,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.1,
     shadowRadius: 8,
+    marginBottom: 6,
   },
   pressed: {
-    opacity: 0.95,
+    opacity: 0.9,
     transform: [{ scale: 0.98 }],
   },
   imageContainer: {
@@ -160,6 +181,13 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
+  imageGradient: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: "30%",
+  },
   discountBadge: {
     position: "absolute",
     top: 8,
@@ -167,82 +195,90 @@ const styles = StyleSheet.create({
     backgroundColor: "#DC2626",
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 8,
   },
   discountText: {
     color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: 11,
+    fontWeight: "800",
   },
-  inCartBadge: {
+  favoriteButton: {
     position: "absolute",
     top: 8,
     left: 8,
-    backgroundColor: "#065F46",
     width: 28,
     height: 28,
     borderRadius: 14,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
     alignItems: "center",
     justifyContent: "center",
+  },
+  inCartBadge: {
+    position: "absolute",
+    bottom: 8,
+    right: 8,
+    backgroundColor: "#059669",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  inCartText: {
+    color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: "800",
   },
   content: {
     padding: 12,
   },
   brand: {
-    fontSize: 11,
+    fontSize: 10,
     color: "#6B7280",
     marginBottom: 4,
     textTransform: "uppercase",
-    fontWeight: "600",
+    fontWeight: "700",
+    letterSpacing: 0.5,
   },
   title: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#111827",
-    marginBottom: 4,
-    lineHeight: 18,
-  },
-  description: {
-    fontSize: 12,
-    color: "#6B7280",
-    marginBottom: 8,
-    lineHeight: 16,
-  },
-  priceRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-    gap: 6,
-  },
-  price: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#065F46",
-  },
-  originalPrice: {
     fontSize: 13,
-    color: "#9CA3AF",
-    textDecorationLine: "line-through",
-  },
-  footer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
+    fontWeight: "700",
+    color: "#111827",
+    marginBottom: 6,
+    lineHeight: 18,
   },
   ratingContainer: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
+    marginBottom: 8,
   },
   rating: {
-    fontSize: 12,
-    fontWeight: "600",
+    fontSize: 11,
+    fontWeight: "700",
     color: "#374151",
   },
   stock: {
-    fontSize: 11,
-    color: "#6B7280",
+    fontSize: 10,
+    color: "#9CA3AF",
+    marginLeft: "auto",
+  },
+  priceContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 10,
+  },
+  price: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#065F46",
+  },
+  originalPrice: {
+    fontSize: 12,
+    color: "#9CA3AF",
+    textDecorationLine: "line-through",
   },
   addButton: {
     flexDirection: "row",
@@ -251,12 +287,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#065F46",
     paddingVertical: 10,
     paddingHorizontal: 12,
-    borderRadius: 8,
+    borderRadius: 10,
     gap: 6,
   },
   addButtonPressed: {
     opacity: 0.85,
-    transform: [{ scale: 0.98 }],
   },
   addButtonDisabled: {
     backgroundColor: "#9CA3AF",
@@ -266,7 +301,7 @@ const styles = StyleSheet.create({
   },
   addButtonText: {
     color: "#FFFFFF",
-    fontSize: 13,
-    fontWeight: "600",
+    fontSize: 12,
+    fontWeight: "700",
   },
 });
