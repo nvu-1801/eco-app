@@ -29,7 +29,7 @@ export function FloatingCartButton({ itemCount, totalPrice, onPress }: Props) {
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
-    bottom: 20,
+    bottom: 100,
     left: 16,
     right: 16,
     backgroundColor: "#065F46",

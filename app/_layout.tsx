@@ -1,33 +1,62 @@
-// src/app/_layout.tsx
-import { Stack } from "expo-router";
+import { Tabs } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { Provider } from "react-redux";
-import { useAppInitialization } from "../src/hooks/useAppInitialization";
 import { store } from "../src/store";
+import { useAppInitialization } from "../src/hooks/useAppInitialization";
+import PopupTabBar from "../src/components/common/PopupTabBar";
 
-// Keep splash screen visible while loading
 SplashScreen.preventAutoHideAsync();
 
 function RootLayoutNav() {
   const { isReady } = useAppInitialization();
 
   useEffect(() => {
-    if (isReady) {
-      SplashScreen.hideAsync();
-    }
+    if (isReady) SplashScreen.hideAsync();
   }, [isReady]);
 
-  if (!isReady) {
-    return null;
-  }
+  if (!isReady) return null;
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="(product)" />
-      <Stack.Screen name="cart" />
-    </Stack>
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+      }}
+      tabBar={(props) => <PopupTabBar {...props} />}
+    >
+      {/* 🏠 Home */}
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: "Home",
+          href: "/",
+        }}
+      />
+
+      {/* 🧡 Favorites */}
+      <Tabs.Screen
+        name="favorites"
+        options={{
+          title: "Favorites",
+        }}
+      />
+
+      {/* 🛍 Products */}
+      <Tabs.Screen
+        name="(product)"
+        options={{
+          title: "Products",
+        }}
+      />
+
+      {/* 🛒 Cart */}
+      <Tabs.Screen
+        name="cart"
+        options={{
+          title: "Cart",
+        }}
+      />
+    </Tabs>
   );
 }
 

@@ -31,7 +31,7 @@ export function ProductCard({ product }: Props) {
 
   const handleToggleFavorite = (e: any) => {
     e.stopPropagation();
-    toggle(product.id);
+    toggle(product.id, product);
   };
 
   const inCart = isInCart(product.id);

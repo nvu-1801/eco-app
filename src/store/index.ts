@@ -2,6 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import { productsApi } from "../services/productsApi";
 import cartReducer from "./cartSlice";
 import favoritesReducer from "./favoritesSlice";
+import { favoritesListener } from "./favoritesPersist";
 
 export const store = configureStore({
   reducer: {
@@ -10,7 +11,12 @@ export const store = configureStore({
     [productsApi.reducerPath]: productsApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(productsApi.middleware),
+    getDefaultMiddleware({
+      serializableCheck: false,
+      immutableCheck: false,
+    })
+      .prepend(favoritesListener.middleware)   // ✅ thêm listener để persist favorites
+      .concat(productsApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

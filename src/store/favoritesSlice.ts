@@ -1,43 +1,62 @@
+// src/store/favoritesSlice.ts
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import { storage } from "../utils/storage";
+import type { Product } from "@/types/product";
 
 type FavoritesState = {
   ids: number[];
+  byId: Record<number, Product>;
   hydrated: boolean;
 };
 
 const initialState: FavoritesState = {
   ids: [],
+  byId: {},
   hydrated: false,
 };
+
+type TogglePayload = number | { id: number; item?: Product };
 
 const favoritesSlice = createSlice({
   name: "favorites",
   initialState,
   reducers: {
-    hydrateFavorites: (state, action: PayloadAction<number[]>) => {
-      state.ids = action.payload;
+    hydrateFavorites: (
+      state,
+      action: PayloadAction<Partial<Pick<FavoritesState, "ids" | "byId">>>
+    ) => {
+      if (action.payload.ids) state.ids = action.payload.ids;
+      if (action.payload.byId) state.byId = action.payload.byId;
       state.hydrated = true;
     },
 
-    toggleFavorite: (state, action: PayloadAction<number>) => {
-      const index = state.ids.indexOf(action.payload);
-      if (index >= 0) {
-        state.ids.splice(index, 1);
+    toggleFavorite: (state, action: PayloadAction<TogglePayload>) => {
+      const { id, item } =
+        typeof action.payload === "number"
+          ? { id: action.payload, item: undefined }
+          : action.payload;
+
+      const idx = state.ids.indexOf(id);
+      if (idx >= 0) {
+        state.ids.splice(idx, 1);
+        delete state.byId[id];
       } else {
-        state.ids.push(action.payload);
+        state.ids.unshift(id);
+        if (item) state.byId[id] = item; // lưu luôn product nếu có
       }
-      storage.setFavorites(state.ids);
     },
 
     clearFavorites: (state) => {
       state.ids = [];
-      storage.setFavorites([]);
+      state.byId = {};
     },
   },
 });
 
 export const { hydrateFavorites, toggleFavorite, clearFavorites } =
   favoritesSlice.actions;
-
 export default favoritesSlice.reducer;
+
+// Selectors tiện dùng
+export const selectFavoriteIds = (s: any) => s.favorites.ids as number[];
+export const selectFavoritesMap = (s: any) => s.favorites.byId as Record<number, Product>;
+export const selectHydrated = (s: any) => !!s.favorites.hydrated;

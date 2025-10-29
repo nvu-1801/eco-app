@@ -11,22 +11,18 @@ export function useAppInitialization() {
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        // Load cart from storage
-        const cart = await storage.getCart();
-        if (cart && cart.length > 0) {
-          dispatch(hydrateCart(cart));
-        }
+        // Cart
+        const cart = (await storage.getCart()) ?? [];
+        dispatch(hydrateCart(cart)); // ✅ luôn hydrate, kể cả []
 
-        // Load favorites from storage
-        const favorites = await storage.getFavorites();
-        if (favorites && favorites.length > 0) {
-          dispatch(hydrateFavorites(favorites));
-        }
+        // Favorites (ids-only version)
+        const favorites = (await storage.getFavorites()) ?? [];
+        dispatch(hydrateFavorites(favorites)); // ✅ luôn hydrate, kể cả []
 
-        setIsReady(true);
       } catch (error) {
         console.error("Error initializing app:", error);
-        setIsReady(true); // Still set ready even on error
+      } finally {
+        setIsReady(true); 
       }
     };
 
